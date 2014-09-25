@@ -99,4 +99,3 @@ L.Control.AutoComplete = L.Control.extend({
 
 L.control.autocomplete = (id, options) => new L.Control.AutoComplete(id, options);
 
-module.exports = L;
