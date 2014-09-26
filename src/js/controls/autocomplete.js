@@ -2,26 +2,40 @@ module.exports = L;
 
 var L = require('leaflet');
 var Immutable = require('immutable');
+require('./../data/transduceimmutable.js');
 var transducers = require('transducers.js');
 var [sequence, compose, into, map, filter, take] =
   [transducers.sequence, transducers.compose, transducers.into, transducers.map, transducers.filter, transducers.take];
 
-Immutable.Vector.prototype['@@append'] = function(x) {
-  return this.push(x);
+var sort = function(a, b) {
+  var a_name = a.properties.NAME;
+  var b_name = b.properties.NAME;
+  if (a_name > b_name) return 1;
+  if (a_name < b_name) return -1;
+  return 0;
 };
-Immutable.Vector.prototype['@@empty'] = function(x) {
-  return Immutable.Vector();
+
+var upper = function(s) {
+  return s.toUpperCase();
 };
 
 var filtername = function(name) {
-  return filter(x => x.properties.NAME === name);
+  return filter(x => upper(x.properties.NAME) === upper(name));
 };
 var fuzzyname = function(name) {
-  return filter(x => x.properties.NAME.indexOf(name) > -1);
+  return filter(x => upper(x.properties.NAME).indexOf(upper(name)) > -1);
 };
 var asproperties = map(x => x.properties);
 var getfuzzyname = function(name) {
   return compose(fuzzyname(name), asproperties);
+};
+
+var makeListItem = function(x) {
+  var a = L.DomUtil.create('a', 'list-group-item');
+  a.href='';
+  a.setAttribute('data-result-name', x.NAME);
+  a.innerHTML = x.NAME;
+  return a;
 };
 
 L.Control.AutoComplete = L.Control.extend({
@@ -47,8 +61,9 @@ L.Control.AutoComplete = L.Control.extend({
     var container = L.DomUtil.create('div', 'auto-complete-container');
     var form = this._form = L.DomUtil.create('form', 'form', container);
     var group = L.DomUtil.create('div', 'form-group', form);
-    var input = this._input = L.DomUtil.create('input', 'form-control', group);
-    L.DomUtil.addClass(input, 'input-sm');
+    var input =
+      this._input =
+      L.DomUtil.create('input', 'form-control input-sm', group);
     input.type = 'text';
     input.placeholder = this.options.placeholder;
     this._results = L.DomUtil.create('div', 'list-group', group);
@@ -68,20 +83,19 @@ L.Control.AutoComplete = L.Control.extend({
     if (this._input.value.length > 2) {
       var result = sequence(getfuzzyname(this._input.value), this.data);
       var results = result.toJS();
-      sequence(compose(map(x => {
-        var li = L.DomUtil.create('a', 'list-group-item');
-        li.setAttribute('data-result-name', x.NAME);
-        li.innerHTML = x.NAME;
-        this._results.appendChild(li);
-        L.DomEvent.addListener(li, 'click', this.itemSelected, this);
-        return li;
-      }), take(10)), results);    }
+      sequence(compose(take(10), map(makeListItem), map(x => {
+        this._results.appendChild(x);
+        L.DomEvent.addListener(x, 'click', this.itemSelected, this);
+        return x;
+      })), results);    }
   },
 
   itemSelected: function(e) {
-    var value = e.target.innerHTML;
+    L.DomEvent.preventDefault(e);
+    var elem = e.target;
+    var value = elem.innerHTML;
     this._results.innerHTML = '';
-    this._input.value = e.target.getAttribute('data-result-name');
+    this._input.value = elem.getAttribute('data-result-name');
     this.find(e);
   },
 
@@ -89,8 +103,10 @@ L.Control.AutoComplete = L.Control.extend({
     L.DomEvent.preventDefault(e);
     var result = sequence(filtername(this._input.value), this.data);
     var data = result.last();
-    var feature = this.options.layer.getFeature(data.id);
-    this._map.fitBounds(feature.getBounds());
+    if (data) {
+      var feature = this.options.layer.getFeature(data.id);
+      this._map.fitBounds(feature.getBounds());
+    }
   },
 
   featureAdded: function(e) {
@@ -98,7 +114,7 @@ L.Control.AutoComplete = L.Control.extend({
   },
 
   layerLoad: function() {
-    this.data = into(Immutable.Vector(), map(x => x), this.rawdata);
+    this.data = into(Immutable.Vector(), map(x => x), this.rawdata.sort(sort));
   }
 });
 

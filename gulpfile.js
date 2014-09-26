@@ -12,7 +12,7 @@ gulp.task('browserify', function() {
       debug: true
     }))
     .pipe(traceur({modules: 'commonjs', sourceMaps: true}))
-    .pipe(uglify())
+    //.pipe(uglify())
     .pipe(gulp.dest('dist/js'));
 });
 
