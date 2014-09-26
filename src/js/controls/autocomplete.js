@@ -58,6 +58,11 @@ L.Control.AutoComplete = L.Control.extend({
     return container;
   },
 
+  onRemove: function(map) {
+    L.DomEvent.removeListener(this._input, 'keyup', this.keyup, this);
+    L.DomEvent.removeListener(this._form, 'submit', this.find, this);
+  },
+
   keyup: function(e) {
     this._results.innerHTML = '';
     if (this._input.value.length > 2) {
