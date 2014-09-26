@@ -7,9 +7,18 @@ var transducers = require('transducers.js');
 var [sequence, compose, into, map, filter, take] =
   [transducers.sequence, transducers.compose, transducers.into, transducers.map, transducers.filter, transducers.take];
 
+var curry = require('lodash.curry');
+var kompose = require('ramda').compose;
+var get = require('ramda').get;
+
+var indexOf = (a, b) => a.indexOf(b);
+var getName = get('NAME');
+var getProps = get('properties');
+var getPropName = kompose(getName, getProps);
+
 var sort = function(a, b) {
-  var a_name = a.properties.NAME;
-  var b_name = b.properties.NAME;
+  var a_name = getPropName(a);
+  var b_name = getPropName(b);
   if (a_name > b_name) return 1;
   if (a_name < b_name) return -1;
   return 0;
@@ -20,21 +29,20 @@ var upper = function(s) {
 };
 
 var filtername = function(name) {
-  return filter(x => upper(x.properties.NAME) === upper(name));
+  return filter(x => upper(getPropName(x)) === upper(name));
 };
 var fuzzyname = function(name) {
-  return filter(x => upper(x.properties.NAME).indexOf(upper(name)) > -1);
+  return filter(x => indexOf(upper(getPropName(x)), upper(name)) > -1);
 };
-var asproperties = map(x => x.properties);
 var getfuzzyname = function(name) {
-  return compose(fuzzyname(name), asproperties);
+  return compose(fuzzyname(name), map(getProps));
 };
 
 var makeListItem = function(x) {
   var a = L.DomUtil.create('a', 'list-group-item');
-  a.href='';
-  a.setAttribute('data-result-name', x.NAME);
-  a.innerHTML = x.NAME;
+  a.href = '';
+  a.setAttribute('data-result-name', getName(x));
+  a.innerHTML = getName(x);
   return a;
 };
 
@@ -57,7 +65,7 @@ L.Control.AutoComplete = L.Control.extend({
     }
   },
 
-  onAdd: function (map) {
+  onAdd: function (m) {
     var container = L.DomUtil.create('div', 'auto-complete-container');
     var form = this._form = L.DomUtil.create('form', 'form', container);
     var group = L.DomUtil.create('div', 'form-group', form);
@@ -73,7 +81,7 @@ L.Control.AutoComplete = L.Control.extend({
     return container;
   },
 
-  onRemove: function(map) {
+  onRemove: function(m) {
     L.DomEvent.removeListener(this._input, 'keyup', this.keyup, this);
     L.DomEvent.removeListener(this._form, 'submit', this.find, this);
   },
