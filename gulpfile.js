@@ -8,16 +8,12 @@ var sourcemaps = require('gulp-sourcemaps');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 
-gulp.task('es6', function() {
-  return gulp.src(['src/js/*.js', 'src/js/**/*.js'], { base: 'src/' })
-  .pipe(sourcemaps.init())
-  .pipe(traceur({ modules: 'commonjs', sourceMaps: true }))
-  .pipe(sourcemaps.write())
-  .pipe(gulp.dest('tmp'));
-});
+var es6ify = require('es6ify');
+es6ify.traceurOverrides = { modules: 'commonjs', sourceMaps: true };
 
 gulp.task('browserify-dev', function() {
-  return browserify('./tmp/js/main.js', { debug: true })
+  return browserify('./src/js/main.js', { debug: true })
+  .transform(es6ify)
   .bundle()
   .pipe(source('main.js'))
   .pipe(buffer())
@@ -26,6 +22,7 @@ gulp.task('browserify-dev', function() {
 
 gulp.task('browserify-prod', function() {
   return browserify('./tmp/js/main.js', { debug: true })
+  .transform(es6ify)
   .bundle()
   .pipe(source('main.js'))
   .pipe(buffer())
@@ -46,8 +43,8 @@ gulp.task('less', function () {
   .pipe(gulp.dest('dist/css'));
 });
 
-gulp.task('default', ['es6', 'browserify-dev', 'less', 'copy']);
-gulp.task('prod', ['es6', 'browserify-prod', 'less', 'copy']);
+gulp.task('default', ['browserify-dev', 'less', 'copy']);
+gulp.task('prod', ['browserify-prod', 'less', 'copy']);
 
 gulp.task('watch', function() {
   gulp.watch('src/**/*.*', ['default']);
