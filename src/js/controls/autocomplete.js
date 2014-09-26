@@ -8,8 +8,9 @@ var [sequence, compose, into, map, filter, take] =
   [transducers.sequence, transducers.compose, transducers.into, transducers.map, transducers.filter, transducers.take];
 
 var curry = require('lodash.curry');
-var kompose = require('ramda').compose;
-var get = require('ramda').get;
+var get = require('lodash.property');
+var kompose = require('lodash.compose');
+var debounce = require('lodash.debounce');
 
 var indexOf = (a, b) => a.indexOf(b);
 var getName = get('NAME');
@@ -75,7 +76,7 @@ L.Control.AutoComplete = L.Control.extend({
     input.type = 'text';
     input.placeholder = this.options.placeholder;
     this._results = L.DomUtil.create('div', 'list-group', group);
-    L.DomEvent.addListener(input, 'keyup', this.keyup, this);
+    L.DomEvent.addListener(input, 'keyup', debounce(this.keyup, 300), this);
     L.DomEvent.addListener(form, 'submit', this.find, this);
     L.DomEvent.disableClickPropagation(container);
     return container;
