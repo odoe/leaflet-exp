@@ -47,6 +47,8 @@ var makeListItem = function(x) {
   return a;
 };
 
+// heavy influence from Leaflet.Control.Geocoder
+// https://github.com/perliedman/leaflet-control-geocoder
 L.Control.AutoComplete = L.Control.extend({
   options: {
     position: 'topright',
