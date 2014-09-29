@@ -1,6 +1,5 @@
-module.exports = Immutable;
-
-var Immutable = require('immutable');
+export default Immutable;
+import Immutable from 'immutable';
 
 Immutable.Vector.prototype['@@append'] = function(x) {
   return this.push(x);

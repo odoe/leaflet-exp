@@ -1,16 +1,16 @@
-module.exports = L;
+export default L;
 
-var L = require('leaflet');
-var Immutable = require('immutable');
-require('./../data/transduceimmutable.js');
-var transducers = require('transducers.js');
+import L from 'leaflet';
+import Immutable from 'immutable';
+import './../data/transduceimmutable';
+import transducers from 'transducers.js';
+import curry from 'lodash.curry';
+import get from 'lodash.property';
+import kompose from 'lodash.compose';
+import debounce from 'lodash.debounce';
+
 var [sequence, compose, into, map, filter, take] =
   [transducers.sequence, transducers.compose, transducers.into, transducers.map, transducers.filter, transducers.take];
-
-var curry = require('lodash.curry');
-var get = require('lodash.property');
-var kompose = require('lodash.compose');
-var debounce = require('lodash.debounce');
 
 var indexOf = (a, b) => a.indexOf(b);
 var getName = get('NAME');
@@ -84,37 +84,104 @@ L.Control.AutoComplete = L.Control.extend({
 
   onRemove: function(m) {
     L.DomEvent.removeListener(this._input, 'keyup', this.keyup, this);
-    L.DomEvent.removeListener(this._form, 'submit', this.find, this);
+    L.DomEvent.removeListener(form, 'submit', this.find, this);
+  },
+
+  keydown: function(e) {
+    console.debug('keycode', e);
+    switch(e.keyCode) {
+      case 38: //up
+        this.select(1);
+        console.debug('key up', e);
+        break;
+      case 40: //down
+        this.select(-1);
+        console.debug('key down', e);
+        break;
+      default:
+        console.debug('key default');
+    }
+  },
+
+  select: function(i) {
+    this._count = this._count - i;
+    if (this._count < 0) this._count = this.resultElems.length - 1;
+    if (this._count > this.resultElems.length - 1) this._count = 0;
+    //console.debug('i, count', i, this._count);
+    if (this._selection) {
+      //console.debug('select 1', this.resultElems);
+      L.DomUtil.removeClass(this._selection, 'active');
+      this._selection = this.resultElems[this._count];
+      //this._selection = i > 0 ? this._selection.nextSibling : this._selection.previousSibling;// this._selection[i > 0 ? 'nextSibling' : 'previousSibling'];
+      //console.debug('select defined', this._selection);
+    }
+    if (!this._selection) {
+      this._selection = this.resultElems[this._count];
+      //console.debug('is it there', this.resultElems, this._selection);
+      //this._selection = this._results[i > 0 ? 'firstChild' : 'lastChild'].nextSibling;
+      L.DomUtil.addClass(this._selection, 'active');
+      //console.debug('select first made', this._selection);
+    }
+    if (this._selection) {
+      //console.debug('select 2', this._selection);
+      L.DomUtil.addClass(this._selection, 'active');
+      //console.debug('selection class added if exist', this._selection);
+    }
   },
 
   keyup: function(e) {
-    this._results.innerHTML = '';
-    if (this._input.value.length > 2) {
-      var result = sequence(getfuzzyname(this._input.value), this.data);
-      var results = result.toJS();
-      sequence(compose(take(10), map(makeListItem), map(x => {
-        this._results.appendChild(x);
-        L.DomEvent.addListener(x, 'click', this.itemSelected, this);
-        return x;
-      })), results);    }
+    if (e.keyCode === 38 || e.keyCode === 40) {
+      this.keydown(e);
+    } else {
+      this._results.innerHTML = '';
+      if (this._input.value.length > 2) {
+        var result = sequence(getfuzzyname(this._input.value), this.data);
+        var results = result.toJS();
+        this.resultElems = sequence(compose(take(10), map(makeListItem), map(x => {
+          this._results.appendChild(x);
+          L.DomEvent.addListener(x, 'click', this.itemSelected, this);
+          return x;
+        })), results);
+        this._count = -1;
+      }
+    }
   },
 
-  itemSelected: function(e) {
-    L.DomEvent.preventDefault(e);
-    var elem = e.target;
+  resultSelected: function() {
+    var elem = this._selection;;
     var value = elem.innerHTML;
     this._results.innerHTML = '';
     this._input.value = elem.getAttribute('data-result-name');
-    this.find(e);
+    this._selection = null;
+    this.find();
   },
 
-  find: function(e) {
-    L.DomEvent.preventDefault(e);
+  itemSelected: function(e) {
+    if (e) L.DomEvent.preventDefault(e);
+    var elem = e.target;
+    var value = elem.innerHTML;
+    this._input.value = elem.getAttribute('data-result-name');
+    //this.find(e);
     var result = sequence(filtername(this._input.value), this.data);
     var data = result.last();
     if (data) {
       var feature = this.options.layer.getFeature(data.id);
       this._map.fitBounds(feature.getBounds());
+    }
+    this._results.innerHTML = '';
+  },
+
+  find: function(e) {
+    if (e) L.DomEvent.preventDefault(e);
+    if (this._selection) {
+      this.resultSelected(e);
+    } else {
+      var result = sequence(filtername(this._input.value), this.data);
+      var data = result.last();
+      if (data) {
+        var feature = this.options.layer.getFeature(data.id);
+        this._map.fitBounds(feature.getBounds());
+      }
     }
   },
 

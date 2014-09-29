@@ -1,8 +1,8 @@
-var L = require('leaflet');
-require('./vendor/esri-leaflet.js');
-require('./controls/autocomplete.js');
-var curry = require('lodash.curry');
-var get = require('lodash.property');
+import L from 'leaflet';
+import './vendor/esri-leaflet.js';
+import './controls/autocomplete';
+import curry from 'lodash.curry';
+import get from 'lodash.property';
 
 var popup = curry((a, b) => L.Util.template(a, b));
 var getProps = get('properties');

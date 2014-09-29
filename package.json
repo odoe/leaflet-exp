@@ -28,6 +28,7 @@
     "lodash.curry": "~2.4.1",
     "lodash.compose": "~2.4.1",
     "lodash.property": "~2.4.1",
-    "lodash.debounce": "~2.4.1"
+    "lodash.debounce": "~2.4.1",
+    "vinyl-source-stream": "~1.0.0"
   }
 }
