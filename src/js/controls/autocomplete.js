@@ -6,8 +6,10 @@ import './../data/transduceimmutable';
 import transducers from 'transducers.js';
 import curry from 'lodash.curry';
 import get from 'lodash.property';
-import kompose from 'lodash.compose';
+import pf from 'pointfree-fantasy';
 import debounce from 'lodash.debounce';
+
+var kompose = pf.compose;
 
 var [sequence, compose, into, map, filter, take] =
   [transducers.sequence, transducers.compose, transducers.into, transducers.map, transducers.filter, transducers.take];
@@ -109,25 +111,16 @@ L.Control.AutoComplete = L.Control.extend({
     this._count = this._count - i;
     if (this._count < 0) this._count = this.resultElems.length - 1;
     if (this._count > this.resultElems.length - 1) this._count = 0;
-    //console.debug('i, count', i, this._count);
     if (this._selection) {
-      //console.debug('select 1', this.resultElems);
       L.DomUtil.removeClass(this._selection, 'active');
       this._selection = this.resultElems[this._count];
-      //this._selection = i > 0 ? this._selection.nextSibling : this._selection.previousSibling;// this._selection[i > 0 ? 'nextSibling' : 'previousSibling'];
-      //console.debug('select defined', this._selection);
     }
     if (!this._selection) {
       this._selection = this.resultElems[this._count];
-      //console.debug('is it there', this.resultElems, this._selection);
-      //this._selection = this._results[i > 0 ? 'firstChild' : 'lastChild'].nextSibling;
       L.DomUtil.addClass(this._selection, 'active');
-      //console.debug('select first made', this._selection);
     }
     if (this._selection) {
-      //console.debug('select 2', this._selection);
       L.DomUtil.addClass(this._selection, 'active');
-      //console.debug('selection class added if exist', this._selection);
     }
   },
 
@@ -163,7 +156,6 @@ L.Control.AutoComplete = L.Control.extend({
     var elem = e.target;
     var value = elem.innerHTML;
     this._input.value = elem.getAttribute('data-result-name');
-    //this.find(e);
     var result = sequence(filtername(this._input.value), this.data);
     var data = result.last();
     if (data) {

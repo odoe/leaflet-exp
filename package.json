@@ -19,6 +19,7 @@
     "gulp-traceur": "~0.13.0",
     "gulp-sourcemaps": "~1.2.2",
     "vinyl-buffer": "~1.0.0",
+    "vinyl-source-stream": "~1.0.0",
     "es6ify": "~1.4.0"
   },
   "dependencies": {
@@ -26,9 +27,8 @@
     "immutable": "~2.0.17",
     "transducers.js": "~0.1.1",
     "lodash.curry": "~2.4.1",
-    "lodash.compose": "~2.4.1",
     "lodash.property": "~2.4.1",
     "lodash.debounce": "~2.4.1",
-    "vinyl-source-stream": "~1.0.0"
+    "pointfree-fantasy": "~0.1.1"
   }
 }
